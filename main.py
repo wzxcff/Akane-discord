@@ -1,8 +1,7 @@
-import discord
-from dotenv import load_dotenv
 import os
 from random import choice
-
+import discord
+from dotenv import load_dotenv
 
 load_dotenv()
 
@@ -10,110 +9,185 @@ GIFS = [
     "https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExdXNiMm15OW1ic2V2Nms5Z3lyOHVsajJlbmU4aTVqMW1hM3UxeDJtbyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/In0Lpu4FVivjISX9HT/giphy.gif",
     "https://media0.giphy.com/media/v1.Y2lkPTc5MGI3NjExaGI1Z3I1eTdnaGxvemlzZWJqYThldnNscTdvMXk2N2czODN1dDhjbiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/o1pWpHPHw2JbLDUQLb/giphy.gif",
     "https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExazRiMXRjbjk0MW1tdDR5eGRpOXZjaXQ2ajZteDZtcmlnbW52bmN6eCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/y4nk5bgwpWL6T5Ax9y/giphy.gif",
-    "https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExMGMxb2Noemw3bXcwZjU2ZGRrZXdkMnA2MjdweWdmdHNvanEyYmwzMSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/D7PwMxzlDx9HfOnSP4/giphy.gif"
+    "https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExMGMxb2Noemw3bXcwZjU2ZGRrZXdkMnA2MjdweWdmdHNvanEyYmwzMSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/D7PwMxzlDx9HfOnSP4/giphy.gif",
 ]
 
 
 async def get_env_id(string_name: str) -> int:
-    return int(os.getenv(string_name))
+  return int(os.getenv(string_name))
 
 
 class Client(discord.Client):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.dynamic_channels = set()
 
-    async def on_ready(self):
-        print(f"Logged in as {self.user}")
+  def __init__(self, *args, **kwargs):
+    super().__init__(*args, **kwargs)
+    self.dynamic_channels = set()
 
-        creator_channel_id = await get_env_id("CREATOR_CHANNEL_ID")
-        creator_channel = self.get_channel(creator_channel_id)
+  async def on_ready(self):
+    print(f"Logged in as {self.user}")
 
-        if creator_channel and creator_channel.category:
-            for channel in creator_channel.category.voice_channels:
-                if channel.id != creator_channel_id and len(channel.members) == 0:
-                    try:
-                        await channel.delete()
-                        print(f"Удален старый пустой канал: {channel.name}")
-                    except discord.HTTPException:
-                        pass
+    creator_channel_id = await get_env_id("CREATOR_CHANNEL_ID")
+    creator_channel = self.get_channel(creator_channel_id)
 
-    async def on_message(self, message):
-        if message.author == self.user:
-            return
-        if message.content.startswith("hello"):
-            await message.channel.send(f"Hello! {message.author.mention}")
+    if creator_channel and creator_channel.category:
+      for channel in creator_channel.category.voice_channels:
+        if channel.id != creator_channel_id and len(channel.members) == 0:
+          try:
+            await channel.delete()
+            print(f"Удален старый пустой канал: {channel.name}")
+          except discord.HTTPException:
+            pass
 
-    async def on_member_join(self, member: discord.Member):
-        welcome_channel = self.get_channel(await get_env_id("WELCOME_CHANNEL_ID"))
-        if not welcome_channel:
-            return
+  async def on_message(self, message: discord.Message):
+    if message.author == self.user:
+      return
 
-        embed = discord.Embed(
-            title="Нью генчик пожаловал",
-            description=(
-                f"Приветствуем на сервере, {member.mention}!"
-            ),
-            color=discord.Color.gold(),
+    if message.content.startswith("hello"):
+      await message.channel.send(f"Hello! {message.author.mention}")
+
+    if not message.content.startswith("!"):
+      return
+
+    args = message.content.split()
+    command = args[0].lower()
+
+    voice_commands = ["!limit", "!lock", "!unlock", "!name"]
+    if command in voice_commands:
+      author_voice = message.author.voice
+
+      if (
+          not author_voice
+          or not author_voice.channel
+          or author_voice.channel.id not in self.dynamic_channels
+      ):
+        await message.channel.send(
+            f"{message.author.mention}, ты должен находиться в своем динамическом голосовом канале!",
+            delete_after=5,
+        )
+        return
+
+      voice_channel = author_voice.channel
+
+      # !limit <число>
+      if command == "!limit":
+        if len(args) < 2 or not args[1].isdigit():
+          await message.channel.send(
+              "⚠️ Укажи число! Пример: `!limit 3` (или `0` для снятия лимита)",
+              delete_after=5,
+          )
+          return
+
+        limit = int(args[1])
+        if 0 <= limit <= 99:
+          await voice_channel.edit(user_limit=limit)
+          await message.channel.send(
+              f"✅ Лимит мест изменен на: `{limit if limit > 0 else 'Без лимита'}`",
+              delete_after=5,
+          )
+        else:
+          await message.channel.send(
+              "⚠️ Лимит должен быть от 0 до 99!", delete_after=5
+          )
+
+      # !lock
+      elif command == "!lock":
+        overwrite = voice_channel.overwrites_for(message.guild.default_role)
+        overwrite.connect = False
+        await voice_channel.set_permissions(
+            message.guild.default_role, overwrite=overwrite
+        )
+        await message.channel.send(
+            f"🔒 Канал **{voice_channel.name}** закрыт для входа!", delete_after=5
         )
 
-        embed.add_field(
-            name="Чек правила, не хотим чтобы ты отлетел(а).",
-            value=f"<#{await get_env_id("RULES_CHANNEL_ID")}>",
-            inline=False
+      # !unlock
+      elif command == "!unlock":
+        overwrite = voice_channel.overwrites_for(message.guild.default_role)
+        overwrite.connect = None
+        await voice_channel.set_permissions(
+            message.guild.default_role, overwrite=overwrite
+        )
+        await message.channel.send(
+            f"🔓 Канал **{voice_channel.name}** снова открыт!", delete_after=5
         )
 
-        if member.display_avatar:
-            embed.set_thumbnail(url=member.display_avatar.url)
+      # !name <новое имя>
+      elif command == "!name":
+        if len(args) < 2:
+          await message.channel.send(
+              "⚠️ Укажи новое имя! Пример: `!name Играем в Apex`",
+              delete_after=5,
+          )
+          return
 
-        embed.set_image(
-            url=choice(GIFS)
+        new_name = " ".join(args[1:])
+        await voice_channel.edit(name=f"🔊 {new_name}")
+        await message.channel.send(
+            f"✏️ Канал переименован в **🔊 {new_name}**", delete_after=5
         )
 
-        guild_icon = member.guild.icon.url if member.guild.icon else None
+  async def on_member_join(self, member: discord.Member):
+    welcome_channel = self.get_channel(await get_env_id("WELCOME_CHANNEL_ID"))
+    rules_channel_id = await get_env_id("RULES_CHANNEL_ID")
+    if not welcome_channel:
+      return
 
-        embed.set_footer(
-            text=f"Ты наш {member.guild.member_count}-й мембер! (уро)",
-            icon_url=guild_icon,
-        )
+    embed = discord.Embed(
+        title="Нью генчик пожаловал",
+        description=f"Приветствуем на сервере, {member.mention}!",
+        color=discord.Color.gold(),
+    )
 
-        await welcome_channel.send(content=f"Эй! {member.mention}!", embed=embed)
+    embed.add_field(
+        name="Чек правила, не хотим чтобы ты отлетел(а).",
+        value=f"<#{rules_channel_id}>",
+        inline=False,
+    )
 
-    async def on_voice_state_update(
-            self,
-            member: discord.Member,
-            before: discord.VoiceState,
-            after: discord.VoiceState,
-    ):
-        creator_channel_id = await get_env_id("CREATOR_CHANNEL_ID")
+    if member.display_avatar:
+      embed.set_thumbnail(url=member.display_avatar.url)
 
-        if after.channel and after.channel.id == creator_channel_id:
-            category = after.channel.category
+    embed.set_image(url=choice(GIFS))
 
-            new_channel = await member.guild.create_voice_channel(
-                name=f"🔊 {member.display_name}'s voice channel",
-                category=category,
-                reason="Динамический голосовой канал",
-            )
+    guild_icon = member.guild.icon.url if member.guild.icon else None
 
-            self.dynamic_channels.add(new_channel.id)
+    embed.set_footer(
+        text=f"Ты наш {member.guild.member_count}-й мембер! (уро)",
+        icon_url=guild_icon,
+    )
 
-            await member.move_to(new_channel)
+    await welcome_channel.send(content=f"Эй! {member.mention}!", embed=embed)
 
-        # -------------------------------------------------------------
+  async def on_voice_state_update(
+      self,
+      member: discord.Member,
+      before: discord.VoiceState,
+      after: discord.VoiceState,
+  ):
+    creator_channel_id = await get_env_id("CREATOR_CHANNEL_ID")
 
-        if before.channel and before.channel.id in self.dynamic_channels:
-            if len(before.channel.members) == 0:
-                self.dynamic_channels.remove(before.channel.id)
-                try:
-                    await before.channel.delete(
-                        reason="Динамический канал опустел и был удален"
-                    )
-                except discord.NotFound:
-                    pass
+    if after.channel and after.channel.id == creator_channel_id:
+      category = after.channel.category
 
+      new_channel = await member.guild.create_voice_channel(
+          name=f"🔊 {member.display_name}'s voice channel",
+          category=category,
+          reason="Динамический голосовой канал",
+      )
 
+      self.dynamic_channels.add(new_channel.id)
 
+      await member.move_to(new_channel)
+
+    if before.channel and before.channel.id in self.dynamic_channels:
+      if len(before.channel.members) == 0:
+        self.dynamic_channels.remove(before.channel.id)
+        try:
+          await before.channel.delete(
+              reason="Динамический канал опустел и был удален"
+          )
+        except discord.NotFound:
+          pass
 
 
 intents = discord.Intents.default()
