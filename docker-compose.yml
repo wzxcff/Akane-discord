@@ -1,0 +1,7 @@
+services:
+  akane-bot:
+    build: .
+    container_name: akane_discord_bot
+    restart: unless-stopped
+    env_file:
+      - .env
