@@ -129,6 +129,15 @@ class Client(discord.Client):
   async def on_member_join(self, member: discord.Member):
     welcome_channel = self.get_channel(await get_env_id("WELCOME_CHANNEL_ID"))
     rules_channel_id = await get_env_id("RULES_CHANNEL_ID")
+
+    try:
+        auto_role_id = await get_env_id("AUTO_ROLE_ID")
+        role = member.guild.get_role(auto_role_id)
+        if role:
+            await member.add_roles(role)
+    except Exception as e:
+        print(f"Не удалось выдать роль: {e}")
+
     if not welcome_channel:
       return
 
