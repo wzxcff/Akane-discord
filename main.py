@@ -14,15 +14,18 @@ GIFS = [
 ]
 
 STATUSES = [
-    discord.Activity(type=discord.ActivityType.playing, name="League of Legends"),
-    discord.Activity(type=discord.ActivityType.playing, name="Genshin Impact"),
-    discord.Activity(type=discord.ActivityType.playing, name="World of Warcraft"),
-    discord.Activity(type=discord.ActivityType.playing, name="Dota 2"),
+    discord.Game(name="League of Legends"),
+    discord.Game(name="Genshin Impact"),
+    discord.Game(name="World of Warcraft"),
+    discord.Game(name="Dota 2"),
+    discord.Game(name="Grand Theft Auto VI"),
+    discord.Game(name="Half-Life 3"),
+    discord.Activity(type=discord.ActivityType.listening, name="YOASOBI — Idol (アイドル)"),
+    discord.Activity(type=discord.ActivityType.listening, name="RADWIMPS feat. Toaka — Suzume"),
+    discord.Activity(type=discord.ActivityType.listening, name="Lofi Hip Hop Radio 🎧"),
     discord.CustomActivity(name="Делает какао для участников ☕"),
-    discord.Activity(type=discord.ActivityType.competing, name="поеданию оперативы на Pi 🥧"),
-    discord.Activity(type=discord.ActivityType.watching, name="новые серии аниме 🍿"),
-    discord.Activity(type=discord.ActivityType.watching, name="как вы молчите в войсе 👁️👄👁️"),
-    discord.Activity(type=discord.ActivityType.playing, name="с вашим нервами 💅 (в частности разраба)")
+    discord.Activity(type=discord.ActivityType.competing, name="Соревнуюсь по поеданию оперативы на Pi 🥧"),
+    discord.CustomActivity(name="Играет с вашими нервами 💅 (в частности разраба)"),
 ]
 
 
