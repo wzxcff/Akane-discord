@@ -2,6 +2,7 @@ import os
 from random import choice
 import discord
 from dotenv import load_dotenv
+from discord.ext import tasks
 
 load_dotenv()
 
@@ -10,6 +11,18 @@ GIFS = [
     "https://media0.giphy.com/media/v1.Y2lkPTc5MGI3NjExaGI1Z3I1eTdnaGxvemlzZWJqYThldnNscTdvMXk2N2czODN1dDhjbiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/o1pWpHPHw2JbLDUQLb/giphy.gif",
     "https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExazRiMXRjbjk0MW1tdDR5eGRpOXZjaXQ2ajZteDZtcmlnbW52bmN6eCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/y4nk5bgwpWL6T5Ax9y/giphy.gif",
     "https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExMGMxb2Noemw3bXcwZjU2ZGRrZXdkMnA2MjdweWdmdHNvanEyYmwzMSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/D7PwMxzlDx9HfOnSP4/giphy.gif",
+]
+
+STATUSES = [
+    discord.Activity(type=discord.ActivityType.playing, name="League of Legends"),
+    discord.Activity(type=discord.ActivityType.playing, name="Genshin Impact"),
+    discord.Activity(type=discord.ActivityType.playing, name="World of Warcraft"),
+    discord.Activity(type=discord.ActivityType.playing, name="Dota 2"),
+    discord.CustomActivity(name="Делает какао для участников ☕"),
+    discord.Activity(type=discord.ActivityType.competing, name="поеданию оперативы на Pi 🥧"),
+    discord.Activity(type=discord.ActivityType.watching, name="новые серии аниме 🍿"),
+    discord.Activity(type=discord.ActivityType.watching, name="как вы молчите в войсе 👁️👄👁️"),
+    discord.Activity(type=discord.ActivityType.playing, name="с вашим нервами 💅 (в частности разраба)")
 ]
 
 
@@ -23,8 +36,16 @@ class Client(discord.Client):
     super().__init__(*args, **kwargs)
     self.dynamic_channels = set()
 
+  @tasks.loop(minutes=30)
+  async def change_status(self):
+      new_status = choice(STATUSES)
+      await self.change_presence(activity=new_status)
+
   async def on_ready(self):
     print(f"Logged in as {self.user}")
+
+    if not self.change_status.is_running():
+        self.change_status.start()
 
     creator_channel_id = await get_env_id("CREATOR_CHANNEL_ID")
     creator_channel = self.get_channel(creator_channel_id)
