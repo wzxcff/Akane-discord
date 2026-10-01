@@ -26,6 +26,13 @@ class VoiceCog(commands.Cog):
     args = message.content.split()
     command = args[0].lower()
 
+    try:
+        await message.delete()
+    except discord.Forbidden:
+        pass
+    except discord.NotFound:
+        pass
+
     voice_commands = ["!limit", "!lock", "!unlock", "!name"]
     if command in voice_commands:
       author_voice = message.author.voice
