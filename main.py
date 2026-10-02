@@ -39,7 +39,6 @@ class AkaneBot(commands.Bot):
         if channel.id != creator_channel_id and len(channel.members) == 0:
           try:
             await channel.delete()
-            print(f"Removed old empty channel: {channel.name}")
           except discord.HTTPException:
             pass
 
