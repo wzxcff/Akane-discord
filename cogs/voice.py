@@ -1,10 +1,5 @@
-import os
 import discord
 from discord.ext import commands
-
-
-async def get_env_id(string_name: str) -> int:
-  return int(os.getenv(string_name))
 
 
 class VoiceCog(commands.Cog):
