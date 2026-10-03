@@ -9,7 +9,7 @@ class ModerationLogs(commands.Cog):
         self.bot = bot
 
     async def send_log(self, guild: discord.Guild, embed: discord.Embed):
-        log_channel_id = get_env_id("MODS_LOG_CHANNEL")
+        log_channel_id = await get_env_id("MODS_LOG_CHANNEL")
         channel = guild.get_channel(log_channel_id)
         if channel:
             await channel.send(embed=embed)
